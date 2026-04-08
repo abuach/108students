@@ -1,6 +1,7 @@
 # CS108
 # Instructor: Chiké Abuah
 # Lab 1: Getting Started with Ollama & GitHub
+# Due Date: Thursday 4/8 9AM
 
 ---
 
@@ -65,9 +66,10 @@ And don't ask me why! 😅
 
 ```bash
 mkdir -p cs108/lab1
-cd cs108/lab1
+cd cs108
 uv init
 uv add ollama
+cd lab1
 ```
 
 ---
@@ -193,7 +195,7 @@ Hi username! You've successfully authenticated...
 ```bash
 mkdir cs108
 cd cs108
-git init
+git init # (only necessary if you didn't run `uv init`)
 ```
 
 ---
