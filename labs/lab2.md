@@ -12,7 +12,8 @@ written from scratch — your job is to *observe, tweak, and reflect*.
 
 **Install dependencies once:**
 ```bash
-uv add numpy matplotlib
+uv add numpy matplotlib 
+uv add MyQt6 # <-- Important!
 cd cs108 
 mkdir art
 cd art 
