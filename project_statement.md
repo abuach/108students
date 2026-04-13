@@ -38,7 +38,7 @@ Group work is coordinated through GitHub. Every meaningful contribution must app
 
 ## Tools
 
-Your project should use at least one tool covered in the course:
+Your project can use any tool covered in the course:
 
 | Tool | Possible uses |
 |------|--------------|
