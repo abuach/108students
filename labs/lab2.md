@@ -7,12 +7,14 @@
 ## Overview
 
 In this lab you will run four generative art simulations, observe their behavior, and make
-deliberate creative choices to produce portfolio-quality output. No new code needs to be
-written from scratch — your job is to *observe, tweak, and reflect*.
+deliberate creative choices. 
+
+No new code needs to be written from scratch, your job is to *observe, tweak variables, and reflect on the outputs*.
 
 **Install dependencies once:**
 ```bash
-uv add numpy matplotlib
+uv add numpy matplotlib 
+uv add MyQt6 # <-- Important!
 cd cs108 
 mkdir art
 cd art 
