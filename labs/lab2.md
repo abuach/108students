@@ -14,7 +14,7 @@ No new code needs to be written from scratch, your job is to *observe, tweak var
 **Install dependencies once:**
 ```bash
 uv add numpy matplotlib 
-uv add MyQt6 # <-- Important!
+uv add PyQt6 # <-- Important!
 cd cs108 
 mkdir art
 cd art 
