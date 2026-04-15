@@ -2,6 +2,8 @@
 
 **Name:** _______________________________ **Date:** _____________
 
+## Due Friday 17th, 1pm
+
 ---
 
 ## Overview
@@ -19,6 +21,10 @@ cd cs108
 mkdir art
 cd art 
 ```
+
+# Submission Note 
+
+You only have to submit the numbered **reflection** questions. The **exploration** question responses do not have to be included in your submission.
 
 ---
 
@@ -211,7 +217,7 @@ attraction[0, 1] =  0.9   # red attracted to blue
 attraction[1, 0] = -0.9   # blue repelled by red
 ```
 
-**What behavior do you observe? Does it look biological?**
+**What behavior do you observe?**
 
 &nbsp;
 
@@ -456,6 +462,21 @@ Try these changes:
 &nbsp;
 
 &nbsp;
+
+---
+
+# Save your work and submit
+
+Create a new **public** Github Repository called `cs108`, upload your local `cs108` folder there.
+
+Email the GitHub repository web link to me at `chike.abuah@wallawalla.edu`
+
+*If you're concerned about privacy* 
+
+You can make a **private** Github Repo and add me as a collaborator, my username is `abuach`.
+
+Congrats, you're done with the second lab! 🎉
+
 
 ---
 
