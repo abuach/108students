@@ -21,7 +21,7 @@ Submit all [OBSERVE] questions. Do not submit [REFLECT].
 **Install dependencies once:**
 
 ```bash
-uv add sounddevice numpy scipy matplotlib
+uv add sounddevice numpy scipy matplotlib PyQt6
 ```
 
 **Test your audio works:**
@@ -84,8 +84,7 @@ def timeline(duration):
     """Return a time array for a given duration in seconds."""
     return np.linspace(0, duration, int(SR * duration))
 
-# Sine 
-
+# ── Sine ──────────────────────────────────────────────────────────────────────
 def sine(freq, duration, amplitude=0.3):
     t = timeline(duration)
     return amplitude * np.sin(2 * np.pi * freq * t)
@@ -115,14 +114,6 @@ tone = sine(440, 2.0)   # 440 Hz = the note A4 (concert pitch)
 show(tone, "440 Hz sine wave")
 play(tone)
 ```
-
-**[OBSERVE]** Look at the waveform. Count approximately how many complete cycles appear in
-the first 0.05 seconds. Does that number match what you'd expect from a 440 Hz signal?
-(Hint: 440 Hz means 440 cycles per second.)
-
-&nbsp;
-
-&nbsp;
 
 Now try these frequencies and note what you hear:
 
@@ -253,7 +244,7 @@ for wave, name in [
     play(wave)
 ```
 
-**[OBSERVE]** The `pad_like` envelope has a long attack. What does that feel like to listen
+**[OBSERVE]** The `pad_like` ("slow pad") envelope has a long attack. What does that feel like to listen
 to compared to `piano_like`? What kind of instrument or sound does each remind you of?
 
 &nbsp;
@@ -313,13 +304,13 @@ play(melody)
 save(melody, "scale.wav")
 ```
 
-**[OBSERVE]** Does the scale sound familiar? Try reversing it:
+**[REFLECT]** Does the scale sound familiar? Try reversing it:
 
 ```python
 play(np.concatenate([note(semitones(A3, s), 0.4) for s in reversed(scale_steps)]))
 ```
 
-**[OBSERVE]** How does the reversed scale feel emotionally compared to the ascending one?
+**[REFLECT]** How does the reversed scale feel emotionally compared to the ascending one?
 
 &nbsp;
 
@@ -524,7 +515,7 @@ play(cave)
 save(cave, "reverb.wav")
 ```
 
-**[OBSERVE]** Compare `wet` (small room) and `cave` (large space). How does the perceived size of the space change?
+**[REFLECT]** Compare `wet` (small room) and `cave` (large space). How does the perceived size of the space change?
 
 &nbsp;
 
@@ -554,18 +545,12 @@ play(mild_dist)
 play(heavy_dist)
 ```
 
-**[OBSERVE]** Look at the waveforms for clean vs. heavy distortion. What has physically happened to the shape of the wave?
+**[REFLECT]** Look at the waveforms for clean vs. heavy distortion. What has physically happened to the shape of the wave?
 
 &nbsp;
 
 &nbsp;
 
-**[OBSERVE]** Heavy distortion on a sine wave starts to sound like a square wave. Looking
-back at Part 1B, does that match what you'd expect?
-
-&nbsp;
-
-&nbsp;
 
 ### 3D — Low-Pass Filter (Making Sound Muffled)
 
@@ -589,7 +574,7 @@ play(brighter)
 save(muffled, "filtered.wav")
 ```
 
-**[OBSERVE]** The sawtooth wave is naturally bright and buzzy. How does lowpass filtering
+**[REFLECT]** The sawtooth wave is naturally bright and buzzy. How does lowpass filtering
 at 500 Hz change its character? What frequencies did you lose?
 
 &nbsp;
@@ -605,26 +590,185 @@ you think a "vintage analog warmth" plugin in a professional DAW is actually doi
 
 ---
 
-## Portfolio Submission
+### 4 — Putting it all together 
 
-Combine at least **two** elements from Parts 1–3 into an original piece. It can be a
-melody, a beat, an atmospheric texture, or anything you find interesting. Apply at least
-one effect.
+Here's a complete beat-making script with chord progression. It builds a classic lo-fi feel: a swung boom-bap drum pattern, bassline, chord pads, and a simple melodic motif all layered.
+
+What each layer does:
+
+Kick — pitch-swept sine (120 Hz dropping), on beats 1 & 3 (the "boom")
+Snare — noise + 180 Hz tone blend with ghost hits for texture
+Hi-hats — swung 8th notes (SWING = 0.62) to give it that lazy pocket
+Chords — Am → C → G → Am progression, soft sine pads
+Bass — root notes an octave below with a small walk-up on beat 4
+Melody — pentatonic hook (A C D E G) one octave up
 
 ```python
-# Build your piece here
-# Save it when you're happy:
-save(your_wave, "my_piece.wav")
+import numpy as np
+import sounddevice as sd
+from scipy.io.wavfile import write
+
+SR = 44100
+BPM = 85
+BEAT = 60 / BPM          # one quarter note in seconds
+SWING = 0.62             # >0.5 pushes the "and" beats late (lo-fi swing feel)
+
+# ── Utilities ────────────────────────────────────────────────────────────────
+
+def semitones(freq, n):
+    return freq * (2 ** (n / 12))
+
+def tone(freq, dur, amp=0.3, wave="sine"):
+    t = np.linspace(0, dur, int(SR * dur), endpoint=False)
+    if wave == "sine":
+        s = np.sin(2 * np.pi * freq * t)
+    elif wave == "saw":
+        s = 2 * (t * freq % 1) - 1
+    elif wave == "square":
+        s = np.sign(np.sin(2 * np.pi * freq * t))
+    # Soft envelope (attack / release)
+    env = np.ones_like(t)
+    a = int(0.01 * SR); r = int(0.15 * SR)
+    env[:a] = np.linspace(0, 1, a)
+    env[-r:] = np.linspace(1, 0, r)
+    return (s * env * amp).astype(np.float32)
+
+def chord(freqs, dur, amp=0.18):
+    return sum(tone(f, dur, amp) for f in freqs)
+
+def silence(dur):
+    return np.zeros(int(SR * dur), dtype=np.float32)
+
+# ── Drums (synthesized) ───────────────────────────────────────────────────────
+
+def kick(dur=0.35):
+    t = np.linspace(0, dur, int(SR * dur), endpoint=False)
+    freq = 120 * np.exp(-20 * t)          # pitch drop
+    s = np.sin(2 * np.pi * freq * t)
+    env = np.exp(-8 * t)
+    return (s * env * 0.9).astype(np.float32)
+
+def snare(dur=0.18):
+    t = np.linspace(0, dur, int(SR * dur), endpoint=False)
+    noise = np.random.randn(len(t))
+    tone_s = np.sin(2 * np.pi * 180 * t)
+    env = np.exp(-25 * t)
+    return ((noise * 0.6 + tone_s * 0.4) * env * 0.55).astype(np.float32)
+
+def hihat(dur=0.05, amp=0.12):
+    t = np.linspace(0, dur, int(SR * dur), endpoint=False)
+    noise = np.random.randn(len(t))
+    env = np.exp(-60 * t)
+    return (noise * env * amp).astype(np.float32)
+
+# ── Pattern builder ───────────────────────────────────────────────────────────
+
+def place(buf, clip, start_sec):
+    i = int(start_sec * SR)
+    end = min(i + len(clip), len(buf))
+    buf[i:end] += clip[:end - i]
+
+def make_bar(beats=4):
+    """One bar of boom-bap with swing 8th notes."""
+    bar_len = int(BEAT * beats * SR)
+    buf = np.zeros(bar_len, dtype=np.float32)
+
+    # Kick on 1 and 3
+    for b in [0, 2]:
+        place(buf, kick(), b * BEAT)
+
+    # Snare on 2 and 4
+    for b in [1, 3]:
+        place(buf, snare(), b * BEAT)
+
+    # Swung 8th-note hi-hats
+    straight = BEAT / 2
+    swung    = BEAT * SWING
+    offbeat  = BEAT * (1 - SWING)
+    for b in range(beats):
+        place(buf, hihat(),       b * BEAT)                   # on the beat
+        place(buf, hihat(amp=0.07), b * BEAT + swung)         # swung "and"
+
+    # Ghost snare (quiet, add texture)
+    place(buf, snare() * 0.2, 0.75 * BEAT)
+    place(buf, snare() * 0.15, 2.5  * BEAT)
+
+    return buf
+
+# ── Chords & Bass ─────────────────────────────────────────────────────────────
+
+A3 = 220.0
+
+def make_chords(dur=BEAT * 4):
+    am = chord([semitones(A3, 0), semitones(A3, 3), semitones(A3, 7)], dur)
+    C  = chord([semitones(A3, 3), semitones(A3, 7), semitones(A3, 10)], dur)
+    G  = chord([semitones(A3, 10), semitones(A3, 14), semitones(A3, 17)], dur)
+    return np.concatenate([am, C, G, am])  # 4 bars
+
+def make_bass():
+    """Root notes an octave below, on beat 1 of each chord bar."""
+    roots = [A3 / 2, semitones(A3, 3) / 2, semitones(A3, 10) / 2, A3 / 2]
+    bars = []
+    for root in roots:
+        bar = silence(BEAT * 4)
+        note = tone(root, BEAT * 0.9, amp=0.45, wave="sine")
+        place(bar, note, 0)
+        # Quick walk-up on beat 4
+        walk = tone(semitones(root, 2), BEAT * 0.4, amp=0.3, wave="sine")
+        place(bar, walk, BEAT * 3)
+        bars.append(bar)
+    return np.concatenate(bars)
+
+def make_melody():
+    """Simple pentatonic hook over the 4-bar loop."""
+    # A minor pentatonic intervals (in semitones)
+    penta = [0, 3, 5, 7, 10]
+
+    # use indices into penta (NOT semitone values)
+    pattern = [0, 2, 3, 2, 4, 3, 2, 0]
+
+    notes = []
+    for i, deg in enumerate(pattern):
+        freq = semitones(A3 * 2, penta[deg])
+        dur  = BEAT * 0.9 if i % 2 == 0 else BEAT * 0.45
+
+        notes.append(tone(freq, dur, amp=0.12, wave="sine"))
+        notes.append(silence(BEAT * 0.1))
+
+    melody = np.concatenate(notes)
+
+    full = silence(BEAT * 16)
+    place(full, melody, 0)
+    return full
+
+# ── Assemble ──────────────────────────────────────────────────────────────────
+
+BARS = 4
+drums   = np.concatenate([make_bar() for _ in range(BARS)])
+chords  = make_chords()
+bass    = make_bass()
+melody  = make_melody()
+
+# Trim to shortest (floating-point length differences)
+n = min(len(drums), len(chords), len(bass), len(melody))
+mix = drums[:n] + chords[:n] + bass[:n] + melody[:n]
+
+# Soft limiter
+mix = np.tanh(mix * 1.2) * 0.85
+
+print("Playing… (Ctrl+C to stop)")
+sd.play(mix, SR)
+sd.wait()
 ```
 
-**Describe your piece** — what did you build, what choices did you make, and what surprised you?
+**[REFLECT]** Try tweaking:
+
+BPM = 85 — drop to 80 for even more slumped energy
+SWING = 0.62 — push toward 0.67 for more shuffle, back to 0.5 for straight
+Change wave="sine" to "saw" on the chords for a grittier, less clean pad
 
 &nbsp;
 
 &nbsp;
-
-&nbsp;
-
----
 
 *CS 108 — The Art and Practice of Computer Science | Walla Walla University*
