@@ -38,7 +38,7 @@ Group work is coordinated through GitHub. Every meaningful contribution must app
 
 ## Tools
 
-Your project can use any tool covered in the course:
+Your project can use any tools covered in the course:
 
 | Tool | Possible uses |
 |------|--------------|
@@ -48,7 +48,6 @@ Your project can use any tool covered in the course:
 | Streamlit | Data dashboards, research tools, portfolio sites |
 | Ollama | Local LLM applications, AI writing tools, chatbots |
 | Hugging Face | Fine-tuning, dataset creation, model deployment |
-| Stable Diffusion / Diffusers | Generative art tools, image pipelines |
 | FastAPI | Backend services, AI APIs, data pipelines |
 | Blender Python API | Procedural art, 3D tools, animation scripts |
 | A-Frame | WebXR experiences, 3D visualizations, interactive scenes |
@@ -123,13 +122,13 @@ Proposals are not binding contracts. You may change direction after getting feed
 
 ---
 
-## Weekly Journal Reports (every Friday)
+## Weekly Project Journal Reports (every Friday)
 
-Each Friday, submit a short journal entry to the course portal before the end of class. This is not a status report — it is a reflective log. Write it in the first person, in plain prose.
+Each Friday, submit a short project journal entry to the course portal before the end of class. This is not a status report — it is a reflective log. Write it in the first person, in plain prose.
 
 **Your entry should cover:**
 
-- **What you did this week.** Be specific: which files did you touch, what problem were you solving, what did you ship or attempt to ship?
+- **What you did this week on the project.** Be specific: which files did you touch, what problem were you solving, what did you ship or attempt to ship?
 - **What you learned.** Something technical, something about your tools, or something about how you work.
 - **What blocked you or surprised you.** A bug you spent too long on, a design decision that turned out to be harder than expected, a tool that did not behave as documented.
 - **What you plan to do next week.** One or two concrete goals, not a wish list.
@@ -137,6 +136,8 @@ Each Friday, submit a short journal entry to the course portal before the end of
 Aim for 200–400 words. Quality matters more than length. Journals that say "I worked on my project and made progress" with no specifics will not receive full credit.
 
 Journals are graded on completion and thoughtfulness, not on whether you had a good week. A journal entry about being stuck and not knowing why is more valuable than one that claims everything went smoothly.
+
+> Starting with Journal #3 I will expect to see a Github commit(s) each week with your journal entries.
 
 ---
 
