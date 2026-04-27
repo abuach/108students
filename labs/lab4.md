@@ -61,8 +61,7 @@ while True:
 
 Save this as `lab_pygame.py` and run it. You should see a dark window.
 
-**[OBSERVE]** The loop has three numbered sections. In plain English, what does each section
-do? Why do you think they have to happen in that order?
+**[OBSERVE]** The loop has three numbered sections. In plain English, what does each section do? Why do you think they have to happen in that order?
 
 &nbsp;
 
@@ -111,8 +110,8 @@ Try changing the circle color to each of these and observe:
 (0,   0,   0  )   # ?
 ```
 
-**[REFLECT]** Fill in what color each tuple produces. What does `(255, 255, 0)` look like?
-Can you predict it from the R, G, B values before running it?
+**[REFLECT]** Think what color each tuple produces. What does `(255, 255, 0)` look like?
+Can you predict it from the R, G, B values before running it? Read this: https://en.wikipedia.org/wiki/RGB_color_model 
 
 &nbsp;
 
@@ -127,7 +126,7 @@ Can you predict it from the R, G, B values before running it?
 Replace your `# Update state` section with this:
 
 ```python
-# at the top of the file, outside the loop:
+# at the top of the file, outside the while loop:
 x, y   = 400, 300
 vx, vy = 3, 2
 
@@ -154,7 +153,7 @@ in your head — why does negating `vx` cause a bounce?
 &nbsp;
 
 **[REFLECT]** Change `vx, vy = 3, 2` to `vx, vy = 3, 3`. What changes about the path?
-Try `vx, vy = 4, 2`. Describe the pattern.
+Try `vx, vy = 4, 2`.
 
 &nbsp;
 
@@ -456,42 +455,6 @@ if gravity:
 
 **[OBSERVE]** Turn gravity off and paint with the mouse. How does the behavior change?
 What kind of natural system does zero-gravity mode remind you of?
-
-&nbsp;
-
-&nbsp;
-
----
-
-## Part 5: Putting It Together
-
-Here is the complete control scheme for your finished toy. Add any missing pieces:
-
-| Input | Action |
-|---|---|
-| Left mouse (hold) | Spawn particles |
-| Right mouse (hold) | Attract particles to cursor |
-| Space | Cycle color mode |
-| G | Toggle gravity |
-| R | Clear screen |
-| Escape | Quit |
-
-Add the clear and quit controls:
-
-```python
-if event.type == pygame.KEYDOWN:
-    if event.key == pygame.K_r:
-        particles.clear()
-        screen.fill((30, 30, 46))
-    if event.key == pygame.K_ESCAPE:
-        pygame.quit()
-        sys.exit()
-```
-
-**[REFLECT]** Spend 5 minutes just playing with the toy. Try combining right-click attract
-with left-click spawn. Try toggling gravity mid-trail.
-
-&nbsp;
 
 &nbsp;
 
