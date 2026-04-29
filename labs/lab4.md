@@ -312,7 +312,7 @@ Change the `MOUSEBUTTONDOWN` event to spawn while the mouse is *held*, not just 
 Move the spawn code into the update section:
 
 ```python
-# in update, replace the event-based spawn:
+# "# 1. Handle events", replace the event-based spawn, with:
 if pygame.mouse.get_pressed()[0]:
     for _ in range(5):
         particles.append(Particle(mx, my))
@@ -361,7 +361,7 @@ alpha control about the trail?
 Add a gentle force that pulls each particle toward the mouse cursor:
 
 ```python
-# add to Particle.update(), passing mx and my:
+# modify Particle.update(), passing mx and my:
 def update(self, mx=0, my=0, attract=False):
     if attract:
         dx = mx - self.x
@@ -385,8 +385,7 @@ for p in particles:
     p.update(mx, my, attract=right_held)
 ```
 
-**[OBSERVE]** Hold the right mouse button. What happens to the particles? Release it. What
-happens then?
+**[OBSERVE]** Hold the **left**, and then the **right** mouse button. What happens to the particles?
 
 &nbsp;
 
@@ -410,7 +409,8 @@ Update the `Particle.__init__` to accept a color mode:
 
 ```python
 def __init__(self, x, y, mode=0):
-    ...
+    ... # change the first function line to the above 
+        # and put the below at the bottom of the function
     if mode == 0:   # purple nebula
         self.color = (random.randint(150,255), random.randint(50,150), random.randint(200,255))
     elif mode == 1: # fire
@@ -437,7 +437,7 @@ What is it about the color that creates that feeling?
 Add a gravity toggle with the `G` key:
 
 ```python
-# outside loop:
+# outside game loop:
 gravity = True
 
 # in event handling:
@@ -450,11 +450,10 @@ Update `Particle.update` to respect the toggle:
 
 ```python
 if gravity:
-    self.vy += 0.05
+    self.vy += 0.5
 ```
 
-**[OBSERVE]** Turn gravity off and paint with the mouse. How does the behavior change?
-What kind of natural system does zero-gravity mode remind you of?
+**[OBSERVE]** Turn gravity on and paint with the mouse. How does the behavior change?
 
 &nbsp;
 
