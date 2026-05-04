@@ -240,7 +240,7 @@ if __name__ == '__main__':
 
 ### [OBSERVE]
 4. Change `vel` to `np.random.randn(N, 3) * 0.005`. How does this change the feel of the simulation?
-5. Comment out the `pos[np.abs(pos) > 5] *= -0.5` line. What happens over time? What does this line do?
+5. Comment out the `pos[mask] *= -0.5` line. What happens over time? What does this line do?
 
 ---
 
@@ -331,8 +331,7 @@ if __name__ == '__main__':
 ```
 
 ### [OBSERVE]
-6. The `alpha` channel is set to `vals * 0.9`. This means points with low field values are nearly transparent. Temporarily set all alphas to `1.0`. How does the visualization change, and which version communicates the data better?
-7. Change `res` from `30` to `15`, then to `50`. What are the tradeoffs?
+6. Change `res` from `30` to `15`, then to `50`. What are the tradeoffs?
 
 
 ---
@@ -477,8 +476,8 @@ if __name__ == '__main__':
 ```
 
 ### [OBSERVE]
-8. Change `a`, `b`, `c` to `3, 4, 5` then to `2, 3, 7`. How do the ratios between the three frequencies affect the shape?
-9. The curve is drawn as individual points. Change `size` from `2` to `6`. What does the ribbon look like now?
+7. Change `a`, `b`, `c` to `3, 4, 5` then to `2, 3, 7`. How do the ratios between the three frequencies affect the shape?
+8. The curve is drawn as individual points. Change `size` from `2` to `6`. What does the ribbon look like now?
 
 ---
 
@@ -615,8 +614,8 @@ if __name__ == '__main__':
 
 ### [OBSERVE]
 
-10. Orbit and rotate the structure slowly. Where do the brightest regions form? Do they correspond to fixed “clusters,” or do they appear and disappear over time?
-11. Watch how regions of high color intensity evolve. Do they remain stable, drift, or reorganize into new structures?
+9. Orbit and rotate the structure slowly. Where do the brightest regions form? Do they correspond to fixed “clusters,” or do they appear and disappear over time?
+10. Watch how regions of high color intensity evolve. Do they remain stable, drift, or reorganize into new structures?
 
 
 ---
