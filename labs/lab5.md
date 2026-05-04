@@ -360,10 +360,15 @@ view.camera = scene.TurntableCamera(fov=45, distance=6, elevation=25)
 n = 4000
 t = np.linspace(0, 2 * np.pi, n)
 
+# A, B, C
+a = 3 
+b = 2
+c = 5
+
 base = np.column_stack([
-    np.sin(3 * t + np.pi/4),
-    np.sin(2 * t),
-    np.sin(5 * t)
+    np.sin(a * t + np.pi/4),
+    np.sin(b * t),
+    np.sin(c * t)
 ]).astype(np.float32)
 
 # -----------------------------
