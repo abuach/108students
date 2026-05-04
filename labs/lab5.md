@@ -13,7 +13,7 @@ By the end of this lab you will have produced five 3D scenes, each demonstrating
 ## Setup
 
 ```bash
-pip install vispy pyopengl pyqt6
+uv add vispy pyopengl pyqt6
 ```
 
 Verify:
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     app.run()
 ```
 
-`TurntableCamera` gives you a free-orbit camera out of the box: **click-drag to rotate, scroll to zoom**. Use it on every model.
+`TurntableCamera` gives you a free-orbit camera out of the box: **click-drag to rotate, scroll to zoom**. It is available in every model.
 
 ---
 
@@ -101,14 +101,72 @@ if __name__ == '__main__':
 ### [OBSERVE]
 1. Run the scene. Drag to orbit around the torus. What does the color pattern reveal about how `u` maps onto the surface?
 2. Change `R` to `0.5` and `r` to `1.5` (swap them). Describe what happens to the shape. What does this tell you about the relationship between the two radii?
-3. Replace `np.random.uniform` with `np.linspace` for both `u` and `v` (use `np.meshgrid` or just two `linspace` arrays of length ~100 each, flattened). How does the density pattern change?
+3. Replace with the below version. How does the density pattern change?
 
-### [REFLECT]
-4. The color is computed from `u` but not `v`. What would happen if you added `v` into the color formula? Try it.
-5. A sphere is also a parametric surface: `x = sin(v)cos(u)`, `y = sin(v)sin(u)`, `z = cos(v)`. Modify the code to render a sphere instead. What values of `u` and `v` do you need?
+```python
+import numpy as np
+from vispy import app, scene
 
-### [SYNTHESIS]
-6. Create your own parametric surface. Two options: (a) look up the equations for a **Klein bottle** or **Möbius strip** and implement them, or (b) invent your own by modifying the torus equations in a creative way. Screenshot your result and include it in your portfolio post.
+canvas = scene.SceneCanvas(title='3D Scene', bgcolor='#050510', size=(900, 600), show=True)
+view = canvas.central_widget.add_view()
+view.camera = scene.TurntableCamera(fov=50, distance=6, elevation=20)
+
+# --- Starfield ---
+n_stars = 2000
+stars_xyz = (np.random.rand(n_stars, 3) - 0.5) * 30
+star_sizes = np.random.uniform(1, 3, n_stars)
+scene.visuals.Markers(pos=stars_xyz, size=star_sizes,
+                      face_color=(1, 1, 1, 0.6), edge_width=0,
+                      parent=view.scene)
+
+# --- Torus of colored points ---
+n = 8000
+# --- Torus of colored points (structured grid instead of random) ---
+n_u = 120
+n_v = 80
+
+u_vals = np.linspace(0, 2 * np.pi, n_u)
+v_vals = np.linspace(0, 2 * np.pi, n_v)
+
+u, v = np.meshgrid(u_vals, v_vals)
+u = u.ravel()
+v = v.ravel()
+
+R, r = 1.5, 0.5
+
+x = (R + r * np.cos(v)) * np.cos(u)
+y = (R + r * np.cos(v)) * np.sin(u)
+z = r * np.sin(v)
+
+torus_pts = np.column_stack([x, y, z])
+
+# Color by angle around the ring
+hue = (u / (2 * np.pi))
+
+n = u.size  # IMPORTANT: matches meshgrid output
+
+colors = np.zeros((n, 4))
+colors[:, 0] = np.abs(np.sin(hue * np.pi))        # R
+colors[:, 1] = np.abs(np.sin(hue * np.pi + 2.1))  # G
+colors[:, 2] = np.abs(np.sin(hue * np.pi + 4.2))  # B
+colors[:, 3] = 0.85
+
+torus = scene.visuals.Markers(pos=torus_pts, size=2.5,
+                               face_color=colors, edge_width=0,
+                               parent=view.scene)
+
+# --- Rotation ---
+def on_timer(event):
+    torus.transform = scene.transforms.MatrixTransform()
+    angle = event.elapsed * 30  # degrees/sec
+    torus.transform.rotate(angle, (0, 0, 1))
+    canvas.update()
+
+timer = app.Timer(interval=1/60, connect=on_timer, start=True)
+
+if __name__ == '__main__':
+    app.run()
+```
 
 ---
 
@@ -120,51 +178,69 @@ A **particle system** represents a phenomenon as thousands of individual points,
 from vispy import app, scene
 import numpy as np
 
-canvas = scene.SceneCanvas(title='Nebula', bgcolor='#000008', size=(900, 600), show=True)
+canvas = scene.SceneCanvas(
+    title='Nebula',
+    bgcolor='#000008',
+    size=(900, 600),
+    show=True
+)
+
 view = canvas.central_widget.add_view()
 view.camera = scene.TurntableCamera(fov=60, distance=8, elevation=15)
 
-N = 5000
-pos = (np.random.randn(N, 3) * 0.1).astype(np.float32)
-vel = (np.random.randn(N, 3) * 0.015).astype(np.float32)
+N = 4000
 
-# Color by initial speed
+pos = (np.random.randn(N, 3) * 0.1).astype(np.float32)
+vel = (np.random.randn(N, 3) * 0.03).astype(np.float32)  # faster
+
+# Color by speed
 speed = np.linalg.norm(vel, axis=1)
 speed_norm = (speed - speed.min()) / (speed.max() - speed.min())
+
 colors = np.zeros((N, 4), dtype=np.float32)
-colors[:, 0] = speed_norm               # fast = red
-colors[:, 2] = 1 - speed_norm           # slow = blue
+colors[:, 0] = speed_norm
+colors[:, 2] = 1 - speed_norm
 colors[:, 1] = 0.2
 colors[:, 3] = 0.7
 
-markers = scene.visuals.Markers(pos=pos, size=2, face_color=colors,
-                                 edge_width=0, parent=view.scene)
+markers = scene.visuals.Markers(
+    pos=pos,
+    size=3,
+    face_color=colors,
+    edge_width=0,
+    parent=view.scene
+)
 
 def on_timer(event):
     global pos
-    pos += vel
-    # wrap particles that drift too far
-    pos[np.abs(pos) > 5] *= -0.5
-    markers.set_data(pos=pos, face_color=colors, size=2, edge_width=0)
-    canvas.update()
 
-app.Timer(interval=1/60, connect=on_timer, start=True)
+    # move particles
+    pos += vel
+
+    # gentle swirl (this makes it feel like a nebula)
+    theta = 0.01
+    cos_t, sin_t = np.cos(theta), np.sin(theta)
+    x = pos[:, 0].copy()
+    y = pos[:, 1].copy()
+    pos[:, 0] = cos_t * x - sin_t * y
+    pos[:, 1] = sin_t * x + cos_t * y
+
+    # wrap
+    mask = np.abs(pos) > 5
+    pos[mask] *= -0.5
+
+    # update GPU
+    markers.set_data(pos=pos, face_color=colors, size=3)
+
+timer = app.Timer(1/60, connect=on_timer, start=True)
 
 if __name__ == '__main__':
     app.run()
 ```
 
 ### [OBSERVE]
-1. Watch the particles for 10 seconds. Describe the motion. Where do the blue particles tend to be relative to the red ones, and why?
-2. Change `vel` to `np.random.randn(N, 3) * 0.005`. How does this change the feel of the simulation?
-3. Comment out the `pos[np.abs(pos) > 5] *= -0.5` line. What happens over time? What does this line do?
-
-### [REFLECT]
-4. Currently all particles have constant velocity. Add a gravity effect: subtract a small value from `vel[:, 1]` each frame (e.g. `0.0001`). What does the nebula look like after 5 seconds?
-5. The colors are set once at startup based on initial speed. Recompute the colors each frame based on *current* speed. How does the visual change?
-
-### [SYNTHESIS]
-6. Design a particle system that tells a visual story — an explosion, a black hole pulling particles inward, a flock, or something of your own invention. The key requirement: the motion must be driven by a rule you can describe in one sentence. Write that sentence as a comment at the top of your code.
+4. Change `vel` to `np.random.randn(N, 3) * 0.005`. How does this change the feel of the simulation?
+5. Comment out the `pos[np.abs(pos) > 5] *= -0.5` line. What happens over time? What does this line do?
 
 ---
 
@@ -176,57 +252,88 @@ You've seen Gray-Scott in 2D. Now we'll visualize a 3D **scalar field** — a vo
 from vispy import app, scene
 import numpy as np
 
-canvas = scene.SceneCanvas(title='Scalar Field', bgcolor='#020008', size=(900, 600), show=True)
+canvas = scene.SceneCanvas(
+    title='Animated Scalar Field',
+    bgcolor='#020008',
+    size=(900, 600),
+    show=True
+)
+
 view = canvas.central_widget.add_view()
 view.camera = scene.TurntableCamera(fov=55, distance=7, elevation=25)
 
-# Build a 3D grid of points
+# --- Grid ---
 res = 30
 lin = np.linspace(-2, 2, res)
 gx, gy, gz = np.meshgrid(lin, lin, lin)
 pts = np.column_stack([gx.ravel(), gy.ravel(), gz.ravel()]).astype(np.float32)
 
+# --- Field ---
 def field_value(t):
-    # Pulsing Gaussian blob
     r2 = gx**2 + gy**2 + gz**2
-    sigma = 0.5 + 0.3 * np.sin(t)
-    return np.exp(-r2 / (2 * sigma**2)).ravel().astype(np.float32)
+
+    # BIGGER pulsation so it's visible
+    sigma = 0.4 + 0.5 * np.sin(t * 1.5)
+
+    blob = np.exp(-r2 / (2 * sigma**2))
+
+    # add wave interference (this makes motion obvious)
+    wave = 0.5 * np.sin(3*gx + t) * np.sin(3*gy - t)
+
+    return (blob + wave).ravel().astype(np.float32)
 
 def make_colors(vals):
-    colors = np.zeros((len(vals), 4), dtype=np.float32)
-    colors[:, 0] = vals                    # R: high value = bright
-    colors[:, 2] = 1 - vals               # B: low value = blue
-    colors[:, 3] = vals * 0.9             # alpha = value (sparse edges)
+    v = (vals - vals.min()) / (vals.max() - vals.min() + 1e-6)
+
+    colors = np.zeros((len(v), 4), dtype=np.float32)
+    colors[:, 0] = v
+    colors[:, 1] = 0.2 * v
+    colors[:, 2] = 1 - v
+    colors[:, 3] = 0.15 + 0.85 * v  # ensure visibility
+
     return colors
 
 vals = field_value(0)
-markers = scene.visuals.Markers(pos=pts, size=3,
-                                 face_color=make_colors(vals),
-                                 edge_width=0, parent=view.scene)
+
+markers = scene.visuals.Markers(
+    pos=pts,
+    size=4,
+    face_color=make_colors(vals),
+    edge_width=0,
+    parent=view.scene
+)
+
+# --- Animation ---
+t = 0.0
 
 def on_timer(event):
-    vals = field_value(event.elapsed)
-    markers.set_data(pos=pts, face_color=make_colors(vals),
-                     size=3, edge_width=0)
+    global t
+
+    t += 0.03
+
+    vals = field_value(t)
+
+    markers.set_data(
+        pos=pts,
+        face_color=make_colors(vals),
+        size=4
+    )
+
+    # camera motion = instant "this is alive"
+    view.camera.azimuth += 0.2
+
     canvas.update()
 
-app.Timer(interval=1/60, connect=on_timer, start=True)
+timer = app.Timer(1/60, connect=on_timer, start=True)
 
 if __name__ == '__main__':
     app.run()
 ```
 
 ### [OBSERVE]
-1. Watch the field pulse. What happens to the blue points as the Gaussian grows? What happens to the red points?
-2. The `alpha` channel is set to `vals * 0.9`. This means points with low field values are nearly transparent. Temporarily set all alphas to `1.0`. How does the visualization change, and which version communicates the data better?
-3. Change `res` from `30` to `15`, then to `50`. What are the tradeoffs?
+6. The `alpha` channel is set to `vals * 0.9`. This means points with low field values are nearly transparent. Temporarily set all alphas to `1.0`. How does the visualization change, and which version communicates the data better?
+7. Change `res` from `30` to `15`, then to `50`. What are the tradeoffs?
 
-### [REFLECT]
-4. The Gaussian is symmetric (same width in x, y, z). Make it asymmetric: use different sigma values for each axis, e.g. `gx**2 / sx**2 + gy**2 / sy**2 + gz**2 / sz**2`. Make the sigmas pulse at different rates. Describe what you see.
-5. This visualization maps a number (field value) to color and opacity. This technique is called **volume rendering**. Where else might this technique be useful? (Think: medical imaging, weather, physics simulations.)
-
-### [SYNTHESIS]
-6. Replace the Gaussian with two overlapping blobs whose centers orbit each other slowly. Color the regions of overlap differently (hint: compute each blob separately, then combine with `np.maximum` or addition). Screenshot the result.
 
 ---
 
@@ -236,139 +343,283 @@ if __name__ == '__main__':
 
 ```python
 from vispy import app, scene
+from vispy.visuals import transforms
 import numpy as np
 
-canvas = scene.SceneCanvas(title='Lissajous Ribbon', bgcolor='#000000', size=(900, 600), show=True)
+canvas = scene.SceneCanvas(
+    title='Nebula Ribbon (Volumetric)',
+    bgcolor='#000005',
+    size=(1000, 700),
+    show=True
+)
+
 view = canvas.central_widget.add_view()
-view.camera = scene.TurntableCamera(fov=45, distance=5, elevation=30)
+view.camera = scene.TurntableCamera(fov=45, distance=6, elevation=25)
 
-def make_lissajous(a=3, b=2, c=5, delta=np.pi/4, n=8000):
-    t = np.linspace(0, 2 * np.pi, n)
-    x = np.sin(a * t + delta)
-    y = np.sin(b * t)
-    z = np.sin(c * t)
-    pts = np.column_stack([x, y, z]).astype(np.float32)
+# -----------------------------
+# Base parametric curve
+# -----------------------------
+n = 4000
+t = np.linspace(0, 2 * np.pi, n)
 
-    colors = np.zeros((n, 4), dtype=np.float32)
-    colors[:, 0] = (np.sin(t) + 1) / 2
-    colors[:, 1] = (np.sin(t + 2.1) + 1) / 2
-    colors[:, 2] = (np.sin(t + 4.2) + 1) / 2
-    colors[:, 3] = 0.85
-    return pts, colors
+base = np.column_stack([
+    np.sin(3 * t + np.pi/4),
+    np.sin(2 * t),
+    np.sin(5 * t)
+]).astype(np.float32)
 
-pts, colors = make_lissajous()
-markers = scene.visuals.Markers(pos=pts, size=2, face_color=colors,
-                                 edge_width=0, parent=view.scene)
+# -----------------------------
+# Ribbon object (line strip)
+# -----------------------------
+line = scene.visuals.Line(
+    base,
+    color=(0.4, 0.6, 1.0, 0.0),  # we will override via colors
+    width=2,
+    method='gl',
+    parent=view.scene
+)
 
-phase = [0.0]
+# -----------------------------
+# Color field (nebula gradient)
+# -----------------------------
+c = (np.sin(t) + 1) / 2
+colors = np.zeros((n, 4), dtype=np.float32)
+colors[:, 0] = c**2.5
+colors[:, 1] = 0.3 + 0.4 * (1 - c)
+colors[:, 2] = 0.8 + 0.2 * c
+colors[:, 3] = 0.9
 
+line.set_data(pos=base, color=colors)
+
+# -----------------------------
+# Secondary fog layer (points)
+# -----------------------------
+fog_n = 6000
+fog = np.random.randn(fog_n, 3).astype(np.float32) * 1.5
+
+fog_colors = np.zeros((fog_n, 4), dtype=np.float32)
+fog_colors[:, 2] = 1.0
+fog_colors[:, 3] = 0.03  # very faint fog
+
+fog_markers = scene.visuals.Markers(
+    pos=fog,
+    size=2,
+    face_color=fog_colors,
+    edge_width=0,
+    parent=view.scene
+)
+
+fog_markers.set_gl_state(
+    'translucent',
+    blend=True,
+    depth_test=False
+)
+
+# -----------------------------
+# Motion state
+# -----------------------------
+phase = 0.0
+
+def deform(t, phase):
+    warp = 0.25 * np.sin(6 * t + phase)
+
+    pts = np.empty_like(base)
+    pts[:, 0] = base[:, 0] + warp * np.cos(3 * t + phase)
+    pts[:, 1] = base[:, 1] + warp * np.sin(2 * t - phase)
+    pts[:, 2] = base[:, 2] + warp * np.sin(4 * t + phase * 0.5)
+
+    return pts
+
+# -----------------------------
+# Animation loop
+# -----------------------------
 def on_timer(event):
-    phase[0] += 0.015
-    pts, colors = make_lissajous(delta=phase[0])
-    markers.set_data(pos=pts, face_color=colors, size=2, edge_width=0)
+    global phase
+
+    phase += 0.02
+
+    pts = deform(t, phase)
+
+    # -------------------------
+    # Ribbon glow dynamics
+    # -------------------------
+    pulse = 0.6 + 0.4 * np.sin(phase * 2.0)
+
+    glow = colors.copy()
+    glow[:, 3] = 0.3 + 0.7 * pulse  # alpha pulse
+
+    line.set_data(pos=pts, color=glow, width=2 + 2 * pulse)
+
+    # -------------------------
+    # Fog drift (slow motion field)
+    # -------------------------
+    fog[:, 0] += 0.001 * np.sin(phase)
+    fog[:, 1] += 0.001 * np.cos(phase * 0.7)
+    fog[:, 2] += 0.001 * np.sin(phase * 0.3)
+
+    fog_markers.set_data(pos=fog, face_color=fog_colors)
+
+    # -------------------------
+    # Camera motion (depth cue)
+    # -------------------------
+    view.camera.azimuth += 0.15
+    view.camera.elevation = 25 + 8 * np.sin(phase * 0.3)
+
     canvas.update()
 
-app.Timer(interval=1/60, connect=on_timer, start=True)
+timer = app.Timer(1/60, connect=on_timer, start=True)
 
 if __name__ == '__main__':
+    # IMPORTANT: enable additive glow blending
+    line.set_gl_state('translucent', blend=True, depth_test=False)
+
     app.run()
 ```
 
 ### [OBSERVE]
-1. Watch the ribbon morph over time. At what values of `delta` does it appear to "close" into a stable loop?
-2. Change `a`, `b`, `c` to `3, 4, 5` then to `2, 3, 7`. How do the ratios between the three frequencies affect the shape?
-3. The curve is drawn as individual points. Change `size` from `2` to `6`. What does the ribbon look like now?
-
-### [REFLECT]
-4. The color is based on parameter `t` (position along the curve). What would it look like to color by *speed* instead — i.e., how fast the curve is moving at each point? (Hint: compute `np.diff` on the positions and use the magnitude as color.)
-5. Lissajous figures appear in oscilloscopes, signal processing, and music visualizers. Look up one real-world application and write 2–3 sentences explaining how the math connects.
-
-### [SYNTHESIS]
-6. Create a "Lissajous sculpture" — extend the curve into a ribbon by plotting multiple parallel offset copies (vary a small offset in x or y). Or animate the frequencies `a`, `b`, `c` themselves slowly over time. The goal is a piece you'd be proud to post. Screenshot and include it.
+8. Change `a`, `b`, `c` to `3, 4, 5` then to `2, 3, 7`. How do the ratios between the three frequencies affect the shape?
+9. The curve is drawn as individual points. Change `size` from `2` to `6`. What does the ribbon look like now?
 
 ---
 
-## Model 5 — 3D Data Visualization: Star Cluster
+## Model 5 — Quantum Star Bloom (3D Data Visualization)
 
-Data visualization in 3D means mapping real (or realistic) data onto spatial coordinates and visual properties. Here we generate a synthetic star cluster: each star has a 3D position, a temperature (which determines color), and a luminosity (which determines size).
+Data visualization in 3D maps abstract values into spatial structure and visual properties. In this model, we extend a classic star cluster into a Quantum Star Bloom, where stars emerge from an evolving scalar field that behaves like a living medium.
+
+Each point in space is influenced by:
+
+- a quantum interference field (structure)
+- a radial density potential (cluster formation)
+- a temporal excitation wave (animation)
+
+Stars are no longer static samples — they are responses of the field itself.
 
 ```python
 from vispy import app, scene
 import numpy as np
 
-canvas = scene.SceneCanvas(title='Star Cluster', bgcolor='#000005', size=(900, 600), show=True)
+canvas = scene.SceneCanvas(
+    title='Quantum Field Bloom',
+    bgcolor='#000005',
+    size=(1000, 700),
+    show=True
+)
+
 view = canvas.central_widget.add_view()
-view.camera = scene.TurntableCamera(fov=60, distance=10, elevation=20)
+view.camera = scene.TurntableCamera(fov=55, distance=6, elevation=30)
 
-np.random.seed(42)
-N = 3000
+# -------------------------------------------------
+# GRID POINT CLOUD (dense 3D field)
+# -------------------------------------------------
+res = 55
+lin = np.linspace(-2, 2, res)
 
-# Positions: cluster core + sparse halo
-core = np.random.randn(int(N * 0.7), 3) * 1.2
-halo = np.random.randn(int(N * 0.3), 3) * 4.0
-pos = np.vstack([core, halo]).astype(np.float32)
+x, y, z = np.meshgrid(lin, lin, lin)
+pos0 = np.column_stack([x.ravel(), y.ravel(), z.ravel()]).astype(np.float32)
 
-# Temperature: 3000K (red) to 30000K (blue-white)
-temp = np.random.exponential(scale=0.3, size=len(pos))
-temp = np.clip(temp, 0, 1)
+N = len(pos0)
 
-# Color stars by temperature (blackbody approximation)
-colors = np.zeros((len(pos), 4), dtype=np.float32)
-colors[:, 0] = np.clip(1.0 - temp * 0.6, 0, 1)   # hot stars less red
-colors[:, 1] = np.clip(0.5 - np.abs(temp - 0.5), 0, 1) * 1.5  # peak in mid-range
-colors[:, 2] = np.clip(temp, 0, 1)                 # hot stars more blue
-colors[:, 3] = np.clip(0.4 + temp * 0.6, 0, 1)    # hotter = brighter
+# -------------------------------------------------
+# VISUALS
+# -------------------------------------------------
+colors = np.zeros((N, 4), dtype=np.float32)
 
-# Size: luminosity (hotter stars are bigger)
-sizes = (2 + temp * 5).astype(np.float32)
+markers = scene.visuals.Markers(
+    pos=pos0,
+    size=2,
+    face_color=colors,
+    edge_width=0,
+    parent=view.scene
+)
 
-scene.visuals.Markers(pos=pos, size=sizes, face_color=colors,
-                       edge_width=0, parent=view.scene)
+markers.set_gl_state('translucent', blend=True, depth_test=False)
 
-# Mark the cluster center
-scene.visuals.Markers(pos=np.array([[0, 0, 0]], dtype=np.float32),
-                       size=12, face_color=(1, 1, 0.8, 1),
-                       edge_width=0, parent=view.scene)
+# -------------------------------------------------
+# TIME STATE
+# -------------------------------------------------
+t = 0.0
+
+# -------------------------------------------------
+# FIELD FUNCTION (this is the "physics")
+# -------------------------------------------------
+def field(p, t):
+    x, y, z = p[:, 0], p[:, 1], p[:, 2]
+
+    r = np.sqrt(x**2 + y**2 + z**2)
+
+    # layered wave interference (key effect)
+    f = (
+        np.sin(3*x + t) +
+        np.cos(3*y - t * 0.8) +
+        np.sin(3*z + t * 1.2)
+    )
+
+    # radial collapse/expansion wave
+    f += np.sin(r * 5 - t * 2)
+
+    # vortex twist
+    f += 0.5 * np.sin(x*y + t)
+
+    return f
+
+# -------------------------------------------------
+# COLOR MAPPING (energy visualization)
+# -------------------------------------------------
+def colorize(f):
+    f = (f - f.min()) / (f.max() - f.min() + 1e-6)
+
+    c = np.zeros((N, 4), dtype=np.float32)
+
+    c[:, 0] = f**2.2
+    c[:, 1] = np.sin(f * 3.14)**2
+    c[:, 2] = 1 - f
+
+    c[:, 3] = 0.15 + f * 0.85
+
+    return np.clip(c, 0, 1)
+
+# -------------------------------------------------
+# ANIMATION
+# -------------------------------------------------
+def on_timer(event):
+    global t
+    t += 0.03
+
+    f = field(pos0, t)
+
+    # deform space itself (this is what makes it “alive”)
+    deformation = 0.3 * np.sin(f * 2 + t)
+
+    pos = pos0.copy()
+    pos[:, 0] += deformation * np.sin(t + pos[:, 1])
+    pos[:, 1] += deformation * np.cos(t + pos[:, 2])
+    pos[:, 2] += deformation * np.sin(t + pos[:, 0])
+
+    markers.set_data(
+        pos=pos,
+        face_color=colorize(f),
+        size=2
+    )
+
+    # camera slowly drifts through field
+    view.camera.azimuth += 0.2
+    view.camera.elevation = 30 + 10 * np.sin(t * 0.5)
+
+    canvas.update()
+
+timer = app.Timer(1/60, connect=on_timer, start=True)
 
 if __name__ == '__main__':
     app.run()
 ```
 
 ### [OBSERVE]
-1. Orbit the cluster. Where are the blue-white stars concentrated relative to the red ones? Does this match what you'd expect given how `core` and `halo` are generated?
-2. Three visual channels encode data: position, color, and size. List what each one represents in this simulation.
-3. Change the `scale` in `np.random.exponential` from `0.3` to `0.7`. How does the population of the cluster change? What does this parameter control?
 
-### [REFLECT]
-4. Currently both core and halo stars share the same temperature distribution. Make core stars hotter on average (higher `temp` values) and halo stars cooler. What does this look like visually?
-5. This is a *simulation* of data, not real data. What would be different — and harder — if you were plotting a real star catalog? (Think: what extra information would you need, and what decisions would you have to make?)
+10. Orbit and rotate the structure slowly. Where do the brightest regions form? Do they correspond to fixed “clusters,” or do they appear and disappear over time?
+11. Watch how regions of high color intensity evolve. Do they remain stable, drift, or reorganize into new structures?
 
-### [SYNTHESIS]
-6. Add a second cluster at position `(6, 0, 0)` that is merging with the first — its stars are younger (bluer, bigger). Adjust the camera position to frame both clusters. Screenshot the result and write a two-sentence "artist's statement" about what your visualization shows.
 
 ---
 
-## Submission
-
-Your lab submission is a **portfolio post** containing:
-
-1. **Five screenshots** — one per model, showing your final customized version (not the starter code unchanged).
-2. **One paragraph per model** describing: what you changed, what you observed, and one thing that surprised you.
-3. **Synthesis code** for at least two models (the ones you are most proud of), pasted or linked.
-
-Your post should read like a creative journal entry, not a lab report. Write in first person. Include what broke, what confused you, and what delighted you.
-
----
-
-## Going Further
-
-These are not required, but if you want to push deeper:
-
-- **Vispy `Line` visual** — connect your particle positions with lines for a network graph look
-- **Custom GLSL shaders** — Vispy exposes raw shader code; try modifying a fragment shader to add glow
-- **Real data** — load a CSV of 3D coordinates (e.g., from a protein structure database or NASA's star catalog) and plot it with Model 5's coloring approach
-- **VR export** — export your point cloud to `.ply` format and load it in a WebXR viewer
-
----
 
 *CS 108 — The Art and Practice of Computer Science | Walla Walla University*
