@@ -28,7 +28,7 @@ Every model in this lab uses the same scaffold:
 from vispy import app, scene
 import numpy as np
 
-canvas = scene.SceneCanvas(title='My Scene', bgcolor='#050510', size=(900, 600), show=True)
+canvas = scene.SceneCanvas(title='My Scene', bgcolor='#FFFFFF', size=(900, 600), show=True)
 view = canvas.central_widget.add_view()
 view.camera = scene.TurntableCamera(fov=50, distance=5, elevation=20)
 
@@ -50,7 +50,7 @@ A **parametric surface** is defined by equations that map two angles to a point 
 import numpy as np
 from vispy import app, scene
 
-canvas = scene.SceneCanvas(title='3D Scene', bgcolor='#050510', size=(900, 600), show=True)
+canvas = scene.SceneCanvas(title='3D Scene', bgcolor='#FFFFFF', size=(900, 600), show=True)
 view = canvas.central_widget.add_view()
 view.camera = scene.TurntableCamera(fov=50, distance=6, elevation=20)
 
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 import numpy as np
 from vispy import app, scene
 
-canvas = scene.SceneCanvas(title='3D Scene', bgcolor='#050510', size=(900, 600), show=True)
+canvas = scene.SceneCanvas(title='3D Scene', bgcolor='#FFFFFF', size=(900, 600), show=True)
 view = canvas.central_widget.add_view()
 view.camera = scene.TurntableCamera(fov=50, distance=6, elevation=20)
 
@@ -179,7 +179,7 @@ import numpy as np
 
 canvas = scene.SceneCanvas(
     title='Nebula',
-    bgcolor='#000008',
+    bgcolor='#FFFFFF',
     size=(900, 600),
     show=True
 )
@@ -253,7 +253,7 @@ import numpy as np
 
 canvas = scene.SceneCanvas(
     title='Animated Scalar Field',
-    bgcolor='#020008',
+    bgcolor='#FFFFFF',
     size=(900, 600),
     show=True
 )
@@ -346,7 +346,7 @@ import numpy as np
 
 canvas = scene.SceneCanvas(
     title='Nebula Ribbon (Volumetric)',
-    bgcolor='#000005',
+    bgcolor='#FFFFFF',
     size=(1000, 700),
     show=True
 )
@@ -503,7 +503,7 @@ import numpy as np
 
 canvas = scene.SceneCanvas(
     title='Quantum Field Bloom',
-    bgcolor='#000005',
+    bgcolor='#FFFFFF',
     size=(1000, 700),
     show=True
 )
