@@ -991,7 +991,7 @@ for prompt in prompts:
 
 ### Observations
 
-**[OBSERVE11]**
+**[OBSERVE12]**
 
 Ask Ollama for a melody in a specific cultural style. ABC notation has key signatures
 and modes (Dorian, Mixolydian, etc.) that produce different emotional flavors.
@@ -1191,7 +1191,7 @@ for name, prompt in tasks:
 
 ### Observations
 
-**[OBSERVE12]** Run the "generative" prompt several times. Does the model write the same
+**[OBSERVE13]** Run the "generative" prompt several times. Does the model write the same
 code each time? Does the code always work, or does it sometimes fail? Paste one error
 message you get (if any):
 
@@ -1200,7 +1200,7 @@ message you get (if any):
 &nbsp;
 
 
-**[OBSERVE13]**
+**[OBSERVE14]**
 
 Write your own prompt. Be specific about what you want — the more musical structure you
 describe, the better the output tends to be.
